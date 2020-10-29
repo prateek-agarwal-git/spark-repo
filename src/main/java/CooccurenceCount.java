@@ -74,8 +74,10 @@ public class CooccurenceCount{
 //	 DataSet<Row> df = sparkSession.createDataFrame(entityArticleIdDataset,structType );   			
   Dataset<Row> FilteredRows = entityArticleIdDataset.filter(entityArticleIdDataset.col("entity").isin(KeyWords));
 
+  Dataset<Row> FilteredRows2 = entityArticleIdDataset.filter(entityArticleIdDataset.col("entity").isin(KeyWords));
 		Dataset<Row> count=FilteredRows.groupBy("entity").count();  
-		Dataset<Row> joinedRows=FilteredRows.join(FilteredRows, FilteredRows.col("article_id"));  
+		Dataset<Row> joinedRows=FilteredRows.as("fr1").join(FilteredRows.as("fr2"),col("fr1.article_id").equalTo(col("fr2.article_id")));  
+  Dataset<Row> distinctJoinedRows = joinedRows.filter(joinedRows.col("fr1.entity").lt(joinedRows.col("fr2.entity"))); 
   //FilteredRows.collect().show()  ; 
 //			public String call(Row row) throws Exception {
 		//Dataset<Row> count=entityArticleIdDataset.groupBy("entity").count().as("entity_count");  
@@ -85,7 +87,7 @@ public class CooccurenceCount{
 
 		FilteredRows.dropDuplicates("entity","article_id").toJavaRDD().saveAsTextFile(outputPath1);	
 		count.toJavaRDD().saveAsTextFile(outputPath2);	
-		joinedRows.toJavaRDD().saveAsTextFile(outputPath3);	
+		distinctJoinedRows.toJavaRDD().saveAsTextFile(outputPath3);	
 	
 		//Outputs the dataset to the standard output
 //	FilteredRows.show();
